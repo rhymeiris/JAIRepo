@@ -1,6 +1,7 @@
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 public class sendkey {
+	//키보드 제어
 	//1:A 2:S 3:d 4:w
 	public static void key(int input, int time){
 		try {
