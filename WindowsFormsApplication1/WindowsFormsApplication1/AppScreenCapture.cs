@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Drawing;
 
 namespace AppScreenCapture
@@ -23,7 +19,10 @@ namespace AppScreenCapture
         [DllImport("gdi32.dll")]
         static extern IntPtr CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
         #endregion
-
+        #region Global Value
+        static Graphics gfxBmp;
+        static Region region;
+        #endregion
         public static void PrintW(IntPtr hwnd)
         {
             Rectangle rc = Rectangle.Empty;
@@ -33,27 +32,27 @@ namespace AppScreenCapture
             Bitmap bmp = new Bitmap(
                 rc.Width, rc.Height,
                 System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            Graphics gfxBmp = Graphics.FromImage(bmp);
-            IntPtr hdcBitmap = gfxBmp.GetHdc();
-            bool succeeded = PrintWindow(hwnd, hdcBitmap, 1);
-            gfxBmp.ReleaseHdc(hdcBitmap);
-            if (!succeeded)
+            try { 
+                gfxBmp = Graphics.FromImage(bmp);
+                IntPtr hdcBitmap = gfxBmp.GetHdc();
+                bool succeeded = PrintWindow(hwnd, hdcBitmap, 1);
+                gfxBmp.ReleaseHdc(hdcBitmap);
+                IntPtr hRgn = CreateRectRgn(0, 0, 0, 0);
+                GetWindowRgn(hwnd, hRgn);
+                region = Region.FromHrgn(hRgn);
+            }
+            catch (Exception)
             {
                 gfxBmp.FillRectangle(
-                    new SolidBrush(Color.Gray),
-                    new Rectangle(Point.Empty, bmp.Size));
-            }
-            IntPtr hRgn = CreateRectRgn(0, 0, 0, 0);
-            GetWindowRgn(hwnd, hRgn);
-            Region region = Region.FromHrgn(hRgn);
-            if (!region.IsEmpty(gfxBmp))
-            {
+                new SolidBrush(Color.Gray),
+                new Rectangle(Point.Empty, bmp.Size));
                 gfxBmp.ExcludeClip(region);
                 gfxBmp.Clear(Color.Transparent);
+            }finally
+            {
+                bmp.Save("test.bmp", System.Drawing.Imaging.ImageFormat.Bmp);
+                gfxBmp.Dispose();
             }
-            gfxBmp.Dispose();
-            bmp.Save("test.bmp", System.Drawing.Imaging.ImageFormat.Bmp);
         }
 
 
